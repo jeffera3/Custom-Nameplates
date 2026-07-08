@@ -1,0 +1,41 @@
+name: Build MC Plugin
+
+# 触发条件：推送代码、提交PR时自动构建
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # GitHub云端Linux虚拟机
+    steps:
+      # 1.拉取仓库全部代码
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      # 2.安装JDK17（项目要求）
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # 3. Gradle构建缓存，加速编译
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      # 4. 执行构建命令
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      # 5. 上传编译好的插件jar作为流水线产物
+      - name: Upload built artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MC-Plugin-Jar
+          path: backend/target/*.jar
